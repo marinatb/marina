@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"github.com/marinatb/marina"
+	"log"
 )
 
 func main() {
 
-	fmt.Printf("mariner v%d.%d\n", marina.MajorVersion, marina.MinorVersion)
+	log.Printf("mariner v%d.%d\n", marina.MajorVersion, marina.MinorVersion)
 
 }
