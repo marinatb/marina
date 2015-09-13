@@ -2,9 +2,12 @@ package protocol
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
+	"fmt"
 	"github.com/marinatb/marina/netdl"
 	"github.com/satori/go.uuid"
+	"io"
 	"log"
 	"net/http"
 )
@@ -13,17 +16,21 @@ type Diagnostic struct {
 	Level, Message string
 }
 
+func (d Diagnostic) String() string {
+	return fmt.Sprintf("%s: %s", d.Level, d.Message)
+}
+
 type NetElementRef struct {
 	Id   uuid.UUID `json:"id"`
 	Type string    `json:"type"`
 }
 
 type MarinerConfig struct {
-	NodeId   uuid.UUID                   `json:"nodeId"`
-	Elements map[uuid.UUID]NetElementRef `json:"elements"`
-	LXC      string                      `json:"lxc"`
-	OVS      string                      `json:"ovs"`
-	Click    string                      `json:"click"`
+	NodeId   uuid.UUID                `json:"nodeId"`
+	Elements map[string]NetElementRef `json:"elements"`
+	LXC      string                   `json:"lxc"`
+	OVS      string                   `json:"ovs"`
+	Click    string                   `json:"click"`
 }
 
 type NetworkMaterializationRequest struct {
@@ -31,14 +38,21 @@ type NetworkMaterializationRequest struct {
 	Mapper string
 }
 
-type MaterializationMap struct {
-	Net *netdl.Network
-	Map map[uuid.UUID]MarinerConfig `json:"map"`
+type MaterializationEmbedding struct {
+	Net *netdl.Network           `json:"net"`
+	Map map[string]MarinerConfig `json:"map"`
 }
 
-func Unpack(r *http.Request, x interface{}) error {
+func NewMaterializationEmbedding(net *netdl.Network) *MaterializationEmbedding {
+	mm := new(MaterializationEmbedding)
+	mm.Net = net
+	mm.Map = make(map[string]MarinerConfig)
+	return mm
+}
+
+func Unpack(r io.ReadCloser, x interface{}) error {
 	buf := new(bytes.Buffer)
-	buf.ReadFrom(r.Body)
+	buf.ReadFrom(r)
 	err := json.Unmarshal(buf.Bytes(), &x)
 	if err != nil {
 		log.Println("[unpack] bad message")
@@ -80,4 +94,11 @@ func PackWire(x interface{}) []byte {
 
 func PackLegible(x interface{}) []byte {
 	return pack(x, true)
+}
+
+func InsecureClient() *http.Client {
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	return &http.Client{Transport: tr}
 }
