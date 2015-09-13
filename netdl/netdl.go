@@ -217,7 +217,6 @@ func (net *Network) NewComputer(name string) *Computer {
 }
 
 func (net *Network) ResolveEndpoint(r NetIfRef) Endpoint {
-	fmt.Println("RE: " + r.Type)
 	switch r.Type {
 	case "Computer":
 		return net.Computers[r.Id]
