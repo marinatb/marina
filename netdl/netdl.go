@@ -2,6 +2,7 @@ package netdl
 
 import (
 	"fmt"
+	"github.com/marinatb/marina"
 	"github.com/satori/go.uuid"
 	"strings"
 )
@@ -65,18 +66,11 @@ func (sw *Switch) String() string {
 	return strings.TrimSuffix(s, ",") + "]"
 }
 
-func simpleTypename(x interface{}) string {
-	t := fmt.Sprintf("%T", x)
-	t = strings.TrimPrefix(t, "*")
-	t = strings.TrimPrefix(t, "netdl.")
-	return t
-}
-
 func (sw *Switch) Connect(endpoints ...Endpoint) {
 	for _, e := range endpoints {
 		ifx := e.GetNetHost().AddInterface(sw.Capacity, 0)
 		sw.Endpoints[e.GetNetHost().Id] = NetIfRef{
-			e.GetNetHost().Id, ifx.Id, simpleTypename(e)}
+			e.GetNetHost().Id, ifx.Id, marina.SimpleTypename(e)}
 	}
 }
 
@@ -186,8 +180,8 @@ func (net *Network) NewLink(a, b Endpoint, name string, capacity, latency uint) 
 	ifxa := a.GetNetHost().AddInterface(capacity, latency)
 	ifxb := b.GetNetHost().AddInterface(capacity, latency)
 
-	link.Endpoints[0] = NetIfRef{a.GetNetHost().Id, ifxa.Id, simpleTypename(a)}
-	link.Endpoints[1] = NetIfRef{b.GetNetHost().Id, ifxb.Id, simpleTypename(b)}
+	link.Endpoints[0] = NetIfRef{a.GetNetHost().Id, ifxa.Id, marina.SimpleTypename(a)}
+	link.Endpoints[1] = NetIfRef{b.GetNetHost().Id, ifxb.Id, marina.SimpleTypename(b)}
 
 	net.Links[link.Id] = link
 

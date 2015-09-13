@@ -4,15 +4,16 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/marinatb/marina"
 	"github.com/marinatb/marina/netdl"
+	"github.com/marinatb/marina/protocol"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 )
 
-func buildMap(net *netdl.Network) marina.MaterializationMap {
+func buildMap(net *netdl.Network) protocol.MaterializationMap {
 
-	mm := make(marina.MaterializationMap)
+	mm := make(protocol.MaterializationMap)
 
 	//magic happens
 
@@ -23,12 +24,12 @@ func buildMap(net *netdl.Network) marina.MaterializationMap {
 func materialize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	net := new(netdl.Network)
-	err := marina.Unpack(r, net)
+	err := protocol.Unpack(r, net)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Header().Set("Content-Type", "application/json")
-		d := marina.Diagnostic{"error", "malformed json"}
-		w.Write(marina.Pack(d))
+		d := protocol.Diagnostic{"error", "malformed json"}
+		w.Write(protocol.Pack(d))
 		return
 	}
 
@@ -36,8 +37,8 @@ func materialize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	xpdir := "/marina/xp/" + net.Name
 	os.MkdirAll(xpdir, 0755)
-	ioutil.WriteFile(xpdir+"/net.json", marina.Pack(*net), 0644)
-	ioutil.WriteFile(xpdir+"/map.json", marina.Pack(mm), 0644)
+	ioutil.WriteFile(xpdir+"/net.json", protocol.Pack(*net), 0644)
+	ioutil.WriteFile(xpdir+"/map.json", protocol.Pack(mm), 0644)
 
 }
 

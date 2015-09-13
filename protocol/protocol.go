@@ -1,8 +1,9 @@
-package marina
+package protocol
 
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/marinatb/marina/netdl"
 	"github.com/satori/go.uuid"
 	"log"
 	"net/http"
@@ -12,14 +13,23 @@ type Diagnostic struct {
 	Level, Message string
 }
 
-type MarinerConfig struct {
-	NodeId uuid.UUID `json:"nodeId"`
-	LXC    string    `json:"lxc"`
-	OVS    string    `json:"ovs"`
-	Click  string    `json:"click"`
+type NetElementRef struct {
+	Id   uuid.UUID `json:"id"`
+	Type string    `json:"type"`
 }
 
-type MaterializationMap map[uuid.UUID]MarinerConfig
+type MarinerConfig struct {
+	NodeId   uuid.UUID                   `json:"nodeId"`
+	Elements map[uuid.UUID]NetElementRef `json:"elements"`
+	LXC      string                      `json:"lxc"`
+	OVS      string                      `json:"ovs"`
+	Click    string                      `json:"click"`
+}
+
+type MaterializationMap struct {
+	Net *netdl.Network
+	Map map[uuid.UUID]MarinerConfig `json:"map"`
+}
 
 func Unpack(r *http.Request, x interface{}) error {
 	buf := new(bytes.Buffer)
