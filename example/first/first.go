@@ -1,13 +1,10 @@
-package main
+package first
 
 import (
-	"fmt"
 	"github.com/marinatb/marina/netdl"
-	"github.com/marinatb/marina/protocol"
-	"os"
 )
 
-func main() {
+func Build() *netdl.Network {
 
 	net := netdl.NewNetwork("first")
 
@@ -30,18 +27,6 @@ func main() {
 	c1 := net.NewComputer("c1")
 	sc.Connect(rc, c0, c1)
 
-	fmt.Println(net)
+	return net
 
-	fmt.Printf("\n\n\n")
-
-	js := protocol.PackLegible(net)
-	fmt.Println(string(js))
-
-	_net, err := protocol.UnpackNetwork(js)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	fmt.Println(_net)
 }
