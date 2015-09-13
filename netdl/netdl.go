@@ -58,7 +58,7 @@ type Switch struct {
 }
 
 func (sw *Switch) String() string {
-	s := fmt.Sprintf("%s %dms %dmbps [", sw.Name, sw.Latency, sw.Capacity)
+	s := fmt.Sprintf("%s %dmbps [", sw.Name, sw.Capacity)
 	for _, ref := range sw.Endpoints {
 		s += sw.Net.ResolveEndpoint(ref).GetNetHost().Name + ","
 	}
