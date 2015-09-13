@@ -12,9 +12,9 @@ type Endpoint interface {
 }
 
 type NetHost struct {
-	Id         uuid.UUID                `json:"id"`
-	Name       string                   `json:"name"`
-	Interfaces map[uuid.UUID]*Interface `json:"interfaces"`
+	Id         uuid.UUID             `json:"-"`
+	Name       string                `json:"name"`
+	Interfaces map[string]*Interface `json:"interfaces"`
 }
 
 func (h *NetHost) AddInterface(latency, capacity uint) *Interface {
@@ -23,7 +23,7 @@ func (h *NetHost) AddInterface(latency, capacity uint) *Interface {
 	ifx.Name = fmt.Sprintf("eth%d", len(h.Interfaces))
 	ifx.Latency = latency
 	ifx.Capacity = capacity
-	h.Interfaces[ifx.Id] = ifx
+	h.Interfaces[ifx.Id.String()] = ifx
 	return ifx
 }
 
@@ -54,8 +54,8 @@ type PacketConductor struct {
 type Switch struct {
 	NetHost
 	PacketConductor
-	Net       *Network
-	Endpoints map[uuid.UUID]NetIfRef
+	Net       *Network `json:"-"`
+	Endpoints map[string]NetIfRef
 }
 
 func (sw *Switch) String() string {
@@ -69,7 +69,7 @@ func (sw *Switch) String() string {
 func (sw *Switch) Connect(endpoints ...Endpoint) {
 	for _, e := range endpoints {
 		ifx := e.GetNetHost().AddInterface(sw.Capacity, 0)
-		sw.Endpoints[e.GetNetHost().Id] = NetIfRef{
+		sw.Endpoints[e.GetNetHost().Id.String()] = NetIfRef{
 			e.GetNetHost().Id, ifx.Id, marina.SimpleTypename(e)}
 	}
 }
@@ -98,9 +98,9 @@ type NetIfRef struct {
 }
 
 type Link struct {
-	Id        uuid.UUID `json:"id"`
-	Name      string    `json:"name"`
-	Net       *Network
+	Id        uuid.UUID   `json:"id"`
+	Name      string      `json:"name"`
+	Net       *Network    `json:"-"`
 	Endpoints [2]NetIfRef `json:"endpoints"`
 	PacketConductor
 }
@@ -114,22 +114,22 @@ func (l *Link) String() string {
 }
 
 type Network struct {
-	Id        uuid.UUID               `json:"id"`
-	Name      string                  `json:"name"`
-	Computers map[uuid.UUID]*Computer `json:"computers"`
-	Routers   map[uuid.UUID]*Router   `json:"routers"`
-	Switches  map[uuid.UUID]*Switch   `json:"switches"`
-	Links     map[uuid.UUID]*Link     `json:"links"`
+	Id        uuid.UUID            `json:"id"`
+	Name      string               `json:"name"`
+	Computers map[string]*Computer `json:"computers"`
+	Routers   map[string]*Router   `json:"routers"`
+	Switches  map[string]*Switch   `json:"switches"`
+	Links     map[string]*Link     `json:"links"`
 }
 
 func NewNetwork(name string) *Network {
 	net := new(Network)
 	net.Id = uuid.NewV4()
 	net.Name = name
-	net.Computers = make(map[uuid.UUID]*Computer)
-	net.Routers = make(map[uuid.UUID]*Router)
-	net.Switches = make(map[uuid.UUID]*Switch)
-	net.Links = make(map[uuid.UUID]*Link)
+	net.Computers = make(map[string]*Computer)
+	net.Routers = make(map[string]*Router)
+	net.Switches = make(map[string]*Switch)
+	net.Links = make(map[string]*Link)
 	return net
 }
 
@@ -156,15 +156,24 @@ func (net *Network) String() string {
 	return s
 }
 
+func (net *Network) Init() {
+	for k, _ := range net.Switches {
+		net.Switches[k].Net = net
+	}
+	for k, _ := range net.Links {
+		net.Links[k].Net = net
+	}
+}
+
 func (net *Network) NewRouter(name string, capacity, latency uint) *Router {
 	router := new(Router)
 	router.Id = uuid.NewV4()
 	router.Name = name
-	router.Interfaces = make(map[uuid.UUID]*Interface)
+	router.Interfaces = make(map[string]*Interface)
 	router.Latency = latency
 	router.Capacity = capacity
 
-	net.Routers[router.Id] = router
+	net.Routers[router.Id.String()] = router
 
 	return router
 }
@@ -183,7 +192,7 @@ func (net *Network) NewLink(a, b Endpoint, name string, capacity, latency uint) 
 	link.Endpoints[0] = NetIfRef{a.GetNetHost().Id, ifxa.Id, marina.SimpleTypename(a)}
 	link.Endpoints[1] = NetIfRef{b.GetNetHost().Id, ifxb.Id, marina.SimpleTypename(b)}
 
-	net.Links[link.Id] = link
+	net.Links[link.Id.String()] = link
 
 	return link
 }
@@ -195,8 +204,8 @@ func (net *Network) NewSwitch(name string, capacity uint) *Switch {
 	sw.Name = name
 	sw.Latency = 0
 	sw.Capacity = capacity
-	sw.Endpoints = make(map[uuid.UUID]NetIfRef)
-	net.Switches[sw.Id] = sw
+	sw.Endpoints = make(map[string]NetIfRef)
+	net.Switches[sw.Id.String()] = sw
 	return sw
 }
 
@@ -205,19 +214,19 @@ func (net *Network) NewComputer(name string) *Computer {
 	c.Id = uuid.NewV4()
 	c.Name = name
 	c.Container = "Ubuntu-15.04-Base"
-	c.Interfaces = make(map[uuid.UUID]*Interface)
-	net.Computers[c.Id] = c
+	c.Interfaces = make(map[string]*Interface)
+	net.Computers[c.Id.String()] = c
 	return c
 }
 
 func (net *Network) ResolveEndpoint(r NetIfRef) Endpoint {
 	switch r.Type {
 	case "Computer":
-		return net.Computers[r.Id]
+		return net.Computers[r.Id.String()]
 	case "Switch":
-		return net.Switches[r.Id]
+		return net.Switches[r.Id.String()]
 	case "Router":
-		return net.Routers[r.Id]
+		return net.Routers[r.Id.String()]
 	default:
 		return nil
 	}

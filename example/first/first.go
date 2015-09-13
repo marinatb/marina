@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/marinatb/marina/netdl"
+	"github.com/marinatb/marina/protocol"
+	"os"
 )
 
 func main() {
@@ -30,4 +32,16 @@ func main() {
 
 	fmt.Println(net)
 
+	fmt.Printf("\n\n\n")
+
+	js := protocol.PackLegible(net)
+	fmt.Println(string(js))
+
+	_net, err := protocol.UnpackNetwork(js)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	fmt.Println(_net)
 }

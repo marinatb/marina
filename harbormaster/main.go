@@ -11,34 +11,42 @@ import (
 	"os"
 )
 
-func buildMap(net *netdl.Network) protocol.MaterializationMap {
-
-	mm := make(protocol.MaterializationMap)
+func mclMap(net *netdl.Network) *protocol.MaterializationMap {
+	mm := new(protocol.MaterializationMap)
 
 	//magic happens
 
 	return mm
+}
 
+func buildMap(net *netdl.Network, mapper string) *protocol.MaterializationMap {
+	switch mapper {
+	case "mcl":
+		return mclMap(net)
+	default:
+		log.Printf("unkown mapper '%s", mapper)
+		return nil
+	}
 }
 
 func materialize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
-	net := new(netdl.Network)
-	err := protocol.Unpack(r, net)
+	rq := new(protocol.NetworkMaterializationRequest)
+	err := protocol.Unpack(r, rq)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Header().Set("Content-Type", "application/json")
 		d := protocol.Diagnostic{"error", "malformed json"}
-		w.Write(protocol.Pack(d))
+		w.Write(protocol.PackWire(d))
 		return
 	}
 
-	mm := buildMap(net)
+	mm := buildMap(&rq.Net, rq.Mapper)
 
-	xpdir := "/marina/xp/" + net.Name
+	xpdir := "/marina/xp/" + rq.Net.Name
 	os.MkdirAll(xpdir, 0755)
-	ioutil.WriteFile(xpdir+"/net.json", protocol.Pack(*net), 0644)
-	ioutil.WriteFile(xpdir+"/map.json", protocol.Pack(mm), 0644)
+	ioutil.WriteFile(xpdir+"/net.json", protocol.PackLegible(rq.Net), 0644)
+	ioutil.WriteFile(xpdir+"/map.json", protocol.PackLegible(mm), 0644)
 
 }
 
