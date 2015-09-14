@@ -13,6 +13,8 @@ func TestLocal(t *testing.T) {
 	net := Build()
 	t.Log(net)
 
+	return
+
 	//Pack the network into a json file
 	js := protocol.PackLegible(net)
 	t.Log(string(js))

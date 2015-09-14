@@ -17,7 +17,7 @@ func embed(net *netdl.Network, mapper string) (
 	error, *protocol.MaterializationEmbedding) {
 	switch mapper {
 	case "mcl":
-		return embedders.MclEmbed(net)
+		return embedders.DefaultEmbed(net)
 	default:
 		err := fmt.Errorf("unkown mapper '%s'", mapper)
 		log.Println(err)

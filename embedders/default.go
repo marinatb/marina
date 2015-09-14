@@ -5,7 +5,7 @@ import (
 	"github.com/marinatb/marina/protocol"
 )
 
-func MclEmbed(net *netdl.Network) (error, *protocol.MaterializationEmbedding) {
+func DefaultEmbed(net *netdl.Network) (error, *protocol.MaterializationEmbedding) {
 	eb := protocol.NewMaterializationEmbedding(net)
 
 	//magic happens
